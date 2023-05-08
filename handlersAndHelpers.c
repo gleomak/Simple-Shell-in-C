@@ -8,7 +8,6 @@
 #include <glob.h>
 #include "handlersAndHelpers.h"
 
-
 void clearStruct(argumentStruct *argumentStruct) {
     argumentStruct->input = NULL;
     argumentStruct->output = NULL;
@@ -55,7 +54,11 @@ void globHandler(char *argument, argumentStruct *aStruct, int *i) {
 void cdHandler(char *tokenized) {
     argumentStruct *aStruct = structBasicFiller(tokenized);
     int ret;
-    ret = chdir(aStruct->argumentList[1]);
+    char* dir = getenv("PWD");
+    if(aStruct->argumentList[1] != NULL){
+        dir = aStruct->argumentList[1];
+    }
+    ret = chdir(dir);
     if (ret != 0) {
         perror("cd");
     }
@@ -87,7 +90,7 @@ void destroyAliasHandler(char *tokenized, alias *aliases) {
         if (strcmp(aliases[i].name, "") != 0) {
             if (strcmp(aliases[i].name, arg) == 0) {
                 strcpy(aliases[i].name, "");
-                strtok(aliases[i].command, "");
+                strcpy(aliases[i].command, "");
             }
         }
     }
@@ -110,11 +113,10 @@ int historyHandler(char *tokenized, char *argv, char historyArray[][MAX_LINE], i
     return 0;
 }
 
-void addCommandInHistory(char *command, char historyArray[][MAX_LINE]){
-    printf("Command to be added in history is %s\n",command);
+void addCommandInHistory(char *command, char historyArray[][MAX_LINE]) {
     int i = 0;
-    while(i < MAX_HISTORY){
-        if(strcmp(historyArray[i],"") == 0){
+    while (i < MAX_HISTORY) {
+        if (strcmp(historyArray[i], "") == 0) {
             strcpy(historyArray[i], command);
             return;
         }
@@ -122,8 +124,8 @@ void addCommandInHistory(char *command, char historyArray[][MAX_LINE]){
     }
     //if we reached here then array is maxed out
     strcpy(historyArray[0], "");
-    for(int x = 0 ; x <= MAX_HISTORY - 2 ; x++){
-        strcpy(historyArray[x],historyArray[x + 1]);
+    for (int x = 0; x <= MAX_HISTORY - 2; x++) {
+        strcpy(historyArray[x], historyArray[x + 1]);
     }
     strcpy(historyArray[MAX_HISTORY - 1], command);
 }
@@ -135,7 +137,7 @@ int builtInsHandler(char *tokenized, alias *aliases, char historyArray[][MAX_LIN
 
     int returnValue = 0;
     if (name == NULL) {
-        strcpy(tokenized,"");
+        strcpy(tokenized, "");
         return 0;
     }
 
@@ -152,7 +154,7 @@ int builtInsHandler(char *tokenized, alias *aliases, char historyArray[][MAX_LIN
         returnValue = 1;
     } else if (strcmp(name, "exit") == 0) {
         free(tokenized);
-        for(int i = 0 ; i < MAX_ALIASES ; i++){
+        for (int i = 0; i < MAX_ALIASES; i++) {
             free(aliases[i].name);
             free(aliases[i].command);
         }
@@ -209,11 +211,11 @@ argumentStruct *structPipeFiller(char *tokenized, int pipes) {
     for (int z = 0; z <= pipes; z++) {
         clearStruct(&argumentStructArray[y]);
         while (arg) {
-            if(has_wildcard_char(arg)){
+            if (has_wildcard_char(arg)) {
                 globHandler(arg, &argumentStructArray[y], &i);
-                arg = strtok(NULL," ");
+                arg = strtok(NULL, " ");
                 continue;
-            }else if (strcmp(arg, "<") == 0) {
+            } else if (strcmp(arg, "<") == 0) {
                 argumentStructArray[y].boolInput = 1;
                 arg = strtok(NULL, " ");
                 argumentStructArray[y].input = arg;
@@ -277,7 +279,7 @@ char *tokenizer(char *Input, char *tokenized, int *pipesOrNo) {
 
 void isAlias(char *executable, alias *aliases, int *input) {
     for (int i = 0; i < MAX_ALIASES; i++) {
-        if (strcmp(aliases[i].name, "") != 0 ) {
+        if (strcmp(aliases[i].name, "") != 0) {
             if (strcmp(aliases[i].name, executable) == 0) {
                 executable = aliases[i].command;
                 (*input) = i;
@@ -288,15 +290,15 @@ void isAlias(char *executable, alias *aliases, int *input) {
 
 void clearAliases(alias *aliases) {
     for (int i = 0; i < MAX_ALIASES; i++) {
-        aliases[i].name = (char*) malloc(100 * sizeof(char));
-        aliases[i].command = (char*) malloc(MAX_LINE * sizeof(char));
+        aliases[i].name = (char *) malloc(100 * sizeof(char));
+        aliases[i].command = (char *) malloc(MAX_LINE * sizeof(char));
         strcpy(aliases[i].name, "");
         strcpy(aliases[i].command, "");
     }
 }
 
-void clearAndInitHistory(char array[][MAX_LINE]){
-    for(int i = 0 ; i < MAX_HISTORY ; i++){
+void clearAndInitHistory(char array[][MAX_LINE]) {
+    for (int i = 0; i < MAX_HISTORY; i++) {
         strcpy(array[i], "");
     }
 }

@@ -16,29 +16,28 @@ int childRunning = 0;
 void handleSIGCHLD(int sig) {
     int status;
     // loop through child processes that have exited
-    if(!childRunning) {
+    if (!childRunning) {
         while ((waitpid(-1, &status, WNOHANG)) > 0) {
         }
     }
 }
 
-void handleSIGINT(int sig){
-    if(childRunning) {
-        for(int i = 0 ; i <=fgChildren ; i++) {
-            kill(pidArray[i], SIGINT); // Send SIGINT signal to all child processes
+void handleSIGINT(int sig) {
+    if (childRunning) {
+        for (int i = 0; i <= fgChildren; i++) {
+            kill(pidArray[i], SIGINT);
         }
     }
 }
 
-void handleSIGSTOP(int sig){
-    if(childRunning) {
-        for(int i = 0 ; i <= fgChildren ; i++){
+void handleSIGSTOP(int sig) {
+    if (childRunning) {
+        for (int i = 0; i <= fgChildren; i++) {
             kill(pidArray[i], SIGTSTP);
             setpgid(pidArray[i], 0);
         }
     }
 }
-
 
 void run_Commands(argumentStruct *aStruct) {
     pid_t pid;
@@ -60,8 +59,8 @@ void run_Commands(argumentStruct *aStruct) {
             dup2(fd2, WRITE);
             close(fd2);
         }
-        if(aStruct->boolBackground){
-            setpgid(pid , 0);
+        if (aStruct->boolBackground) {
+            setpgid(pid, 0);
         }
         execvp(aStruct->argumentList[0], aStruct->argumentList);
         perror("execvp"); // Print an error message if execvp fails
@@ -83,7 +82,7 @@ void run_Commands(argumentStruct *aStruct) {
 
 void redirectionHandler(char *tokenized) {
     argumentStruct *aStruct = structBasicFiller(tokenized);
-    if(aStruct == NULL)
+    if (aStruct == NULL)
         return;
     run_Commands(aStruct);
     free(aStruct);
@@ -97,7 +96,7 @@ void pipeHandler(char *tokenized, int pipes) {
     int pipeFather = -1;
     int backgroundpgid = 0;
     int isBackground = 0;
-    if(argumentStructArray[pipes].boolBackground) {
+    if (argumentStructArray[pipes].boolBackground) {
         isBackground = 1;
     }
     fgChildren = pipes;
@@ -143,7 +142,7 @@ void pipeHandler(char *tokenized, int pipes) {
             if (close(p[1]) < 0) {
                 perror("CLOSE22");
             }
-            if(argumentStructArray[z].boolBackground){
+            if (argumentStructArray[z].boolBackground) {
                 setpgid(pid, backgroundpgid);
             }
 
@@ -151,12 +150,12 @@ void pipeHandler(char *tokenized, int pipes) {
             execvp(argumentStructArray[z].argumentList[0], argumentStructArray[z].argumentList);
             exit(EXIT_FAILURE);
         } else {
-            if(isBackground){
-                if(!backgroundpgid){
+            if (isBackground) {
+                if (!backgroundpgid) {
                     backgroundpgid = pid;
                 }
                 setpgid(pid, backgroundpgid);
-            }else {
+            } else {
                 pidArray[z] = pid;
             }
             if (close(p[1]) < 0)
@@ -172,7 +171,7 @@ void pipeHandler(char *tokenized, int pipes) {
     if (close(pipeFather) < 0)
         perror("CloseFatherPipe");
     int status;
-    if(!isBackground){
+    if (!isBackground) {
         childRunning = 1;
         for (int i = 0; i <= pipes; i++) {
             waitpid(-1, &status, WUNTRACED);
@@ -196,20 +195,20 @@ int main() {
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = handleSIGCHLD;
     sa.sa_flags = SA_NOCLDSTOP | SA_RESTART;
-    sigaction(SIGCHLD,&sa,NULL);
+    sigaction(SIGCHLD, &sa, NULL);
 
 
     static struct sigaction sa2;
     memset(&sa2, 0, sizeof(sa2));
     sa2.sa_handler = handleSIGINT;
     sa2.sa_flags = SA_NOCLDSTOP | SA_RESTART;
-    sigaction(SIGINT,&sa2,NULL);
+    sigaction(SIGINT, &sa2, NULL);
 
     static struct sigaction sa3;
     memset(&sa3, 0, sizeof(sa3));
     sa3.sa_handler = handleSIGSTOP;
     sa3.sa_flags = SA_RESTART;
-    sigaction(SIGTSTP,&sa3,NULL);
+    sigaction(SIGTSTP, &sa3, NULL);
 
     while (1) {
         /*Read*/
@@ -225,31 +224,30 @@ int main() {
             arg = strtok(NULL, ";");
         }
         int alias = -1;
-        if(execs == 0)
+        if (execs == 0)
             continue;
         for (int i = 0; i < execs; i++) {
-            strcpy(tokenized,"");
-            tokenized = tokenizer(executables[i] , tokenized, &pipesOrNo);
-            if(strcmp(tokenized,"") == 0 ){
+            strcpy(tokenized, "");
+            tokenized = tokenizer(executables[i], tokenized, &pipesOrNo);
+            if (strcmp(tokenized, "") == 0) {
                 break;
             }
-            isAlias(tokenized , aliases, &alias);
-            if(alias >= 0) {
+            isAlias(tokenized, aliases, &alias);
+            if (alias >= 0) {
                 tokenized = tokenizer(aliases[alias].command, tokenized, &pipesOrNo);
             }
             strcpy(cmdHistory, tokenized);
-            if(builtInsHandler(tokenized, aliases, historyArray, &pipesOrNo)){
-                if(strcmp(tokenized,"history") != 0)
+            if (builtInsHandler(tokenized, aliases, historyArray, &pipesOrNo)) {
+                if (strcmp(tokenized, "history") != 0)
                     addCommandInHistory(cmdHistory, historyArray);
                 continue;
             }
-            if(strcmp(tokenized,"") != 0){
+            if (strcmp(tokenized, "") != 0) {
                 addCommandInHistory(cmdHistory, historyArray);
             }
             if (pipesOrNo != 0) {
                 pipeHandler(tokenized, pipesOrNo);
-            }
-            else {
+            } else {
                 redirectionHandler(tokenized);
             }
             alias = -1;

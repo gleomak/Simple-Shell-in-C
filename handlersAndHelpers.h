@@ -1,6 +1,6 @@
 #define MAX_LINE 500
 #define MAX_EXECUTABLES 10
-#define MAX_HISTORY 5
+#define MAX_HISTORY 20
 #define MAX_ARGS 10
 #define MAX_ALIASES 10
 #define READ 0
