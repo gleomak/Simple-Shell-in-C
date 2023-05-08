@@ -34,7 +34,11 @@ void handleSIGSTOP(int sig) {
     if (childRunning) {
         for (int i = 0; i <= fgChildren; i++) {
             kill(pidArray[i], SIGTSTP);
-            setpgid(pidArray[i], 0);
+            if (i == 0) {
+                setpgid(pidArray[i], 0);
+            }else{
+                setpgid(pidArray[i], pidArray[0]);
+            }
         }
     }
 }
@@ -217,7 +221,7 @@ int main() {
         fgets(cmdLine, MAX_LINE, stdin);
 
         int pipesOrNo = 0;
-        char *arg = strtok(cmdLine, ";");
+        char *arg = strtok(cmdLine, ";"); //
         int execs = 0;
         while (arg) {
             executables[execs++] = arg;
@@ -238,11 +242,11 @@ int main() {
             }
             strcpy(cmdHistory, tokenized);
             if (builtInsHandler(tokenized, aliases, historyArray, &pipesOrNo)) {
-                if (strcmp(tokenized, "history") != 0)
+                if (strcmp(tokenized, "history") != 0)//We don't add the history in history
                     addCommandInHistory(cmdHistory, historyArray);
                 continue;
             }
-            if (strcmp(tokenized, "") != 0) {
+            if (strcmp(tokenized, "") != 0) {//if the tokenized is only spaces don't add in history
                 addCommandInHistory(cmdHistory, historyArray);
             }
             if (pipesOrNo != 0) {
@@ -255,7 +259,7 @@ int main() {
         }
         if (feof(stdin))
             break;
-        for (int i = 0; i < execs; i++) {
+        for (int i = 0; i < execs; i++) { // Reset the executables
             executables[i] = NULL;
         }
     }

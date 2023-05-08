@@ -8,6 +8,7 @@
 #include <glob.h>
 #include "handlersAndHelpers.h"
 
+//Initialize the argument struct object
 void clearStruct(argumentStruct *argumentStruct) {
     argumentStruct->input = NULL;
     argumentStruct->output = NULL;
@@ -55,6 +56,8 @@ void cdHandler(char *tokenized) {
     argumentStruct *aStruct = structBasicFiller(tokenized);
     int ret;
     char* dir = getenv("PWD");
+
+    //if cd comes with a path then replace the PWD
     if(aStruct->argumentList[1] != NULL){
         dir = aStruct->argumentList[1];
     }
@@ -88,7 +91,7 @@ void destroyAliasHandler(char *tokenized, alias *aliases) {
     arg = strtok(NULL, " ");
     for (int i = 0; i < MAX_ALIASES; i++) {
         if (strcmp(aliases[i].name, "") != 0) {
-            if (strcmp(aliases[i].name, arg) == 0) {
+            if (strcmp(aliases[i].name, arg) == 0) { //reset the name and command
                 strcpy(aliases[i].name, "");
                 strcpy(aliases[i].command, "");
             }
@@ -98,6 +101,7 @@ void destroyAliasHandler(char *tokenized, alias *aliases) {
 
 int historyHandler(char *tokenized, char *argv, char historyArray[][MAX_LINE], int *pipes) {
     int x = 1;
+    //if argv is NULL then print the history array
     if (argv == NULL) {
         for (int i = 0; i < MAX_HISTORY; i++) {
             if (strcmp(historyArray[i], "") != 0)
@@ -105,7 +109,7 @@ int historyHandler(char *tokenized, char *argv, char historyArray[][MAX_LINE], i
         }
         return 1;
     }
-
+    //else retrieve the command given
     int z = atoi(argv);
     char *command = historyArray[z - 1];
     strcpy(tokenized, "");
@@ -129,7 +133,8 @@ void addCommandInHistory(char *command, char historyArray[][MAX_LINE]) {
     }
     strcpy(historyArray[MAX_HISTORY - 1], command);
 }
-
+//Check if the first argument of the command is a built-in command
+//If it is then call the right handler
 int builtInsHandler(char *tokenized, alias *aliases, char historyArray[][MAX_LINE], int *pipes) {
     char *duplicate = (char *) malloc(strlen(tokenized) + 1);
     strcpy(duplicate, tokenized);
@@ -163,10 +168,6 @@ int builtInsHandler(char *tokenized, alias *aliases, char historyArray[][MAX_LIN
         exit(0);
     }
 
-//    //Add to history the built ins that are not history
-//    if(strcmp(name, "history") != 0 && returnValue){
-//        addCommandInHistory(tokenized, historyArray);
-//    }
     free(duplicate);
     return returnValue;
 }
@@ -206,8 +207,8 @@ argumentStruct *structPipeFiller(char *tokenized, int pipes) {
 
     argumentStruct *argumentStructArray = (argumentStruct *) malloc((pipes + 1) * sizeof(argumentStruct));
     char *arg = strtok(tokenized, " ");
-    int y = 0;
-    int i = 0;
+    int y = 0; // ++ if we reach | char
+    int i = 0; // ++ for the arguments
     for (int z = 0; z <= pipes; z++) {
         clearStruct(&argumentStructArray[y]);
         while (arg) {
@@ -250,6 +251,7 @@ argumentStruct *structPipeFiller(char *tokenized, int pipes) {
     return argumentStructArray;
 }
 
+//Auxiliary function that puts spaces between <,>,>>,&," characters
 char *tokenizer(char *Input, char *tokenized, int *pipesOrNo) {
     int j = 0;
     char *input = strtok(Input, "\t\n");
@@ -276,7 +278,7 @@ char *tokenizer(char *Input, char *tokenized, int *pipesOrNo) {
     tokenized[j] = '\0';
     return tokenized;
 }
-
+//if the first arg of the command is a alias then retrieve its place in the matrix
 void isAlias(char *executable, alias *aliases, int *input) {
     for (int i = 0; i < MAX_ALIASES; i++) {
         if (strcmp(aliases[i].name, "") != 0) {
@@ -288,6 +290,7 @@ void isAlias(char *executable, alias *aliases, int *input) {
     }
 }
 
+//Auxiliary function that mallocs and clear the array
 void clearAliases(alias *aliases) {
     for (int i = 0; i < MAX_ALIASES; i++) {
         aliases[i].name = (char *) malloc(100 * sizeof(char));
@@ -297,6 +300,7 @@ void clearAliases(alias *aliases) {
     }
 }
 
+//Initialize the HistoryArray
 void clearAndInitHistory(char array[][MAX_LINE]) {
     for (int i = 0; i < MAX_HISTORY; i++) {
         strcpy(array[i], "");
